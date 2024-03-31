@@ -1,0 +1,8 @@
+name: example-app-build
+channels:
+  - conda-forge
+dependencies:
+- python >= 3.12.*
+- pyinstaller >=6.5.0
+- pip:
+    - customtkinter >=5.2.2
