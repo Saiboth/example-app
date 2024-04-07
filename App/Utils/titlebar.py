@@ -143,13 +143,13 @@ class Titlebar(tk.Frame):
         self.minimize_button['bg']=Colors.RGRAY
 
 class App(tk.Tk):
-    def __init__(self, title="") -> None:
+    def __init__(self, title="", width=400, height=200) -> None:
         super().__init__()
         self.title(title) 
         self.title = title
         self.overrideredirect(True) # turns off title bar, geometry
-        self.geometry('200x200+1200+300')
-        self.minsize(width=200, height=200)
+        self.geometry(f'{width}x{height}+1200+300')
+        self.minsize(width=width, height=height)
         # self.iconbitmap("your_icon.ico") # to show your own icon 
         self.minimized = False
         self.maximized = False
@@ -188,13 +188,11 @@ class App(tk.Tk):
         #xwin=None
         #ywin=None
 
-
-
-        self.resizex_widget.bind("<B1-Motion>",self.resizex)
+        self.resizex_widget.bind("<B1-Motion>", lambda event, arg="x": self.resizexy(event, arg))
         # self.resizex_widget2.bind("<B1-Motion>",self.resizex)
-        self.resizey_widget.bind("<B1-Motion>",self.resizey)
+        self.resizey_widget.bind("<B1-Motion>", lambda event, arg="y": self.resizexy(event, arg))
         # self.resizey_widget2.bind("<B1-Motion>",self.resizey)
-        self.resizexy_widget.bind("<B1-Motion>",self.resizexy)
+        self.resizexy_widget.bind("<B1-Motion>", lambda event, arg="xy": self.resizexy(event, arg))
 
     def set_appwindow(self): # to display the window icon on the taskbar, 
                                 # even when using self.overrideredirect(True
@@ -212,70 +210,28 @@ class App(tk.Tk):
         self.wm_withdraw()
         self.after_idle(self.wm_deiconify)
 
-    def resizex(self, event):
-        xwin = self.winfo_x()
-        difference = (event.x_root - xwin) - self.winfo_width()
-        
-        if self.winfo_width() > 150 : # 150 is the minimum width for the window
-            try:
-                self.geometry(f"{ self.winfo_width() + difference }x{ self.winfo_height() }")
-            except:
-                pass
+    def resizexy(self, event, direction):
+        if "x" in direction:
+            xwin = self.winfo_x()
+            xdifference = (event.x_root - xwin) - self.winfo_width()
         else:
-            if difference > 0: # so the window can't be too small (150x150)
-                try:
-                    self.geometry(f"{ self.winfo_width() + difference }x{ self.winfo_height() }")
-                except:
-                    pass
-                
-        # resizex_widget.config(bg=DGRAY)
+            xdifference = 0
 
-    def resizey(self, event):
-        ywin = self.winfo_y()
-        difference = (event.y_root - ywin) - self.winfo_height()
-
-        if self.winfo_height() > 150: # 150 is the minimum height for the window
-            try:
-                self.geometry(f"{ self.winfo_width()  }x{ self.winfo_height() + difference}")
-            except:
-                pass
+        if "y" in direction:
+            ywin = self.winfo_y()
+            ydifference = (event.y_root - ywin) - self.winfo_height()
         else:
-            if difference > 0: # so the window can't be too small (150x150)
-                try:
-                    self.geometry(f"{ self.winfo_width()  }x{ self.winfo_height() + difference}")
-                except:
-                    pass
+            ydifference = 0
 
-        # resizey_widget.config(bg=DGRAY)
+        try:
+            self.geometry(f"{ self.winfo_width() + xdifference }x{ self.winfo_height() + ydifference}")
+        except:
+            pass
 
-    def resizexy(self, event):
-        xwin = self.winfo_x()
-        xdifference = (event.x_root - xwin) - self.winfo_width()
-        ywin = self.winfo_y()
-        ydifference = (event.y_root - ywin) - self.winfo_height()
-
-        if self.winfo_width() > 150 : # 150 is the minimum width for the window
-            try:
-                self.geometry(f"{ self.winfo_width() + xdifference }x{ self.winfo_height() + ydifference}")
-            except:
-                pass
-        else:
-            if xdifference > 0: # so the window can't be too small (150x150)
-                try:
-                    self.geometry(f"{ self.winfo_width() + xdifference }x{ self.winfo_height() + ydifference}")
-                except:
-                    pass
-        if self.winfo_height() > 150: # 150 is the minimum height for the window
-            try:
-                self.geometry(f"{ self.winfo_width()  + xdifference}x{ self.winfo_height() + ydifference}")
-            except:
-                pass
-        else:
-            if ydifference > 0: # so the window can't be too small (150x150)
-                try:
-                    self.geometry(f"{ self.winfo_width()  + xdifference}x{ self.winfo_height() + ydifference}")
-                except:
-                    pass
+        try:
+            self.geometry(f"{ self.winfo_width()  + xdifference}x{ self.winfo_height() + ydifference}")
+        except:
+            pass
 
         # resizexy_widget.config(bg=DGRAY)
 
