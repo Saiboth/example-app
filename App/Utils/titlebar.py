@@ -9,38 +9,37 @@ class Colors:
     RED = '#ae0d1a'
 
 class Titlebar(tk.Frame):
-    def __init__(self, parent=None, title="") -> None:
+    def __init__(self, parent=None, title="", titlebarcolor=Colors.DGRAY) -> None:
         super().__init__()
-        self.config(bg=Colors.RGRAY, relief='raised', bd=0, highlightthickness=0)
+        self.config(bg=titlebarcolor, relief='raised', bd=0, highlightthickness=0)
         self.parent = parent
+        self.titlebarcolor = titlebarcolor
 
-        # put a close button on the title bar
-        self.close_button = tk.Button(self, text='  ×  ', command=parent.destroy,bg=Colors.RGRAY,padx=2,pady=2,font=("calibri", 13),bd=0,fg='white',highlightthickness=0)
-        self.expand_button = tk.Button(self, text=' 🗖 ', command=self.maximize_me,bg=Colors.RGRAY,padx=2,pady=2,bd=0,fg='white',font=("calibri", 13),highlightthickness=0)
-        self.minimize_button = tk.Button(self, text=' ⎯ ',command=self.minimize_me,bg=Colors.RGRAY,padx=2,pady=2,bd=0,fg='white',font=("calibri", 13),highlightthickness=0)
-        self.title = tk.Label(self, text=title, bg=Colors.RGRAY,bd=0,fg='white',font=("helvetica", 10),highlightthickness=0, padx=5)
+        # add buttons to the title bar
+        self.title = tk.Label(self, text=title, bg=self.titlebarcolor,bd=0,fg='white',font=("helvetica", 10),highlightthickness=0, padx=5)
+        self.close_button = tk.Button(self, text='  ×  ', command=parent.destroy,bg=self.titlebarcolor,padx=2,pady=2,font=("calibri", 13),bd=0,fg='white',highlightthickness=0)
+        self.expand_button = tk.Button(self, text=' 🗖 ', command=self.maximize_me,bg=self.titlebarcolor,padx=2,pady=2,bd=0,fg='white',font=("calibri", 13),highlightthickness=0)
+        self.minimize_button = tk.Button(self, text=' ⎯ ',command=self.minimize_me,bg=self.titlebarcolor,padx=2,pady=2,bd=0,fg='white',font=("calibri", 13),highlightthickness=0)
 
         # pack the widgets
-        self.pack(fill="x")
+        self.title.pack(side="left", padx=10)
         self.close_button.pack(side="right", ipadx=7, ipady=1)
         self.expand_button.pack(side="right", ipadx=7, ipady=1)
         self.minimize_button.pack(side="right", ipadx=7, ipady=1)
-        self.title.pack(side="left", padx=10)
+        self.pack(fill="x")
 
-        # bind title bar motion to the move window function
-        # self.bind('<Button-1>', self.get_pos) # so you can drag the window from the title bar
-        # self.title.bind('<Button-1>', self.get_pos) # so you can drag the window from the title 
+        # bind double click to maximize method
         self.bind('<Double-Button-1>', self.maximize_me)
 
-        # button effects in the title bar when hovering over buttons
+        # hover effects for buttons
         self.close_button.bind('<Enter>', self.changex_on_hovering)
-        self.close_button.bind('<Button-1>', self.changex_on_click)
         self.close_button.bind('<Leave>',self.returnx_to_normalstate)
         self.expand_button.bind('<Enter>', self.change_size_on_hovering)
         self.expand_button.bind('<Leave>', self.return_size_on_hovering)
         self.minimize_button.bind('<Enter>', self.changem_size_on_hovering)
         self.minimize_button.bind('<Leave>', self.returnm_size_on_hovering)
 
+        # bind move to frame and label
         self.bindMove(self)
         self.bindMove(self.title)
 
@@ -49,15 +48,17 @@ class Titlebar(tk.Frame):
         if widget:
             w = widget
         w.bind("<Button-1>", lambda event, arg=w: self.startMove(event, arg))
-        w.bind("<ButtonRelease-1>", lambda event, arg=w: self.stopMove(event, arg))
         w.bind("<B1-Motion>", lambda event, arg=w: self.moving(event, arg))
 
         # self.bind("<Map>",self.frame_mapped)
 
     def startMove(self, event, w):
+        # get relative click position when maximized and return to old size on drag
         if self.parent.maximized == True:
-            locx = int(event.x/self.get_geometry_xy(self.parent.geometry())[0] * self.get_geometry_xy(self.normal_size)[0])
-            locy = int(event.y/self.get_geometry_xy(self.parent.geometry())[1] * self.get_geometry_xy(self.normal_size)[1])
+            normalx, normaly = self.get_geometry_xy(self.normal_size)
+            maxx, maxy = self.get_geometry_xy(self.parent.geometry())
+            locx = int(event.x/ maxx * normalx)
+            locy = int(event.y/ maxy * normaly)
             w.x = locx
             w.y = locy
             self.maximize_me()
@@ -66,14 +67,10 @@ class Titlebar(tk.Frame):
             w.x = event.x
             w.y = event.y
 
-    def stopMove(self, event, w):
-        w.x = None
-        w.y = None
-
     def moving(self, event, w):
         x = (event.x_root - w.x - w.winfo_rootx() + self.winfo_rootx())
         y = (event.y_root - w.y - w.winfo_rooty() + self.winfo_rooty())
-        self.parent.geometry("+%s+%s" % (x, y))
+        self.parent.geometry(f"+{x}+{y}")
 
     def get_geometry_xy(self, geom):
         xy = geom.split("+")[0]
@@ -85,12 +82,10 @@ class Titlebar(tk.Frame):
             self.parent.overrideredirect(False)
             self.parent.unbind("<FocusOut>")
             self.parent.update_idletasks()
-            self.parent.after_idle(self.iconify)
-
-            # self.set_appwindow()
+            self.parent.after_idle(self.safe_iconify)
             self.parent.minimized = True       
 
-    def iconify(self):
+    def safe_iconify(self):
         try:
             self.parent.iconify()
         except tk.TclError: 
@@ -103,65 +98,64 @@ class Titlebar(tk.Frame):
             self.parent.set_appwindow()
             self.parent.deiconify()
             self.parent.focus()
-            self.parent.attributes("-alpha",1) # so you can see the window when is not minimized
             self.parent.after_idle(lambda: self.bind("<FocusOut>", self.minimize_me))
             self.parent.minimized = False                              
 
     def maximize_me(self, *args):
-        if self.parent.maximized == False: # if the window was not maximized
+        if self.parent.maximized == False:
             self.normal_size = self.parent.geometry()
             self.expand_button.config(text=" 🗗 ")
             self.parent.geometry(f"{self.parent.winfo_screenwidth()}x{self.parent.winfo_screenheight()}+0+0")
             self.parent.maximized = not self.parent.maximized 
-            # now it's maximized
             
-        else: # if the window was maximized
+        else:
             self.expand_button.config(text=" 🗖 ")
             self.parent.geometry(self.normal_size)
             self.parent.maximized = not self.parent.maximized
-            # now it is not maximized
 
     def changex_on_hovering(self, event):
         self.close_button['bg']=Colors.RED
         
-    def changex_on_click(self, event):
-        self.close_button['bg']='#f16f7a'
-        
     def returnx_to_normalstate(self, event):
-        self.close_button['bg']=Colors.RGRAY
+        self.close_button['bg']=self.titlebarcolor
         
     def change_size_on_hovering(self, event):
         self.expand_button['bg']=Colors.LGRAY
         
     def return_size_on_hovering(self, event):
-        self.expand_button['bg']=Colors.RGRAY
+        self.expand_button['bg']=self.titlebarcolor
         
     def changem_size_on_hovering(self, event):
         self.minimize_button['bg']=Colors.LGRAY
         
     def returnm_size_on_hovering(self, event):
-        self.minimize_button['bg']=Colors.RGRAY
+        self.minimize_button['bg']=self.titlebarcolor
 
 class App(tk.Tk):
-    def __init__(self, title="", width=400, height=200) -> None:
+    def __init__(self, title="", width=400, height=200, titlebarcolor=Colors.DGRAY) -> None:
         super().__init__()
         self.title(title) 
         self.title = title
         self.overrideredirect(True) # turns off title bar, geometry
-        self.geometry(f'{width}x{height}+1200+300')
+        self.geom = f'{width}x{height}+1200+300'
+        self.geometry(self.geom)
         self.minsize(width=width, height=height)
         # self.iconbitmap("your_icon.ico") # to show your own icon 
         self.minimized = False
         self.maximized = False
 
         self.config(bg=Colors.LGRAY2, borderwidth=1)
-        self.titlebar = Titlebar(self, self.title)
+        self.titlebar = Titlebar(self, self.title, titlebarcolor)
         self.resizeSetup()
 
         # some settings
         self.bind("<FocusOut>", self.titlebar.minimize_me)
         self.bind("<FocusIn>", self.titlebar.deminimize) # to view the window by clicking on the window icon on the taskbar
+
+        self.update_idletasks()
         self.after_idle(self.set_appwindow) # to see the icon on the task bar
+        self.update_idletasks()
+        self.deiconify()
 
         self.mainloop()
 
@@ -172,30 +166,28 @@ class App(tk.Tk):
         # resize widgets
         self.resizex_widget = tk.Frame(self.window, bg="white", cursor="sb_h_double_arrow")
         self.resizex_widget.pack(side="right", ipadx=2, fill="y")
-        # self.resizex_widget2 = tk.Frame(self.window, bg="white", cursor="sb_h_double_arrow")
-        # self.resizex_widget2.pack(side="left", ipadx=2, fill="y")
+        self.resizex_widget2 = tk.Frame(self.window, bg="white", cursor="sb_h_double_arrow")
+        self.resizex_widget2.pack(side="left", ipadx=2, fill="y")
 
         self.resizey_widget = tk.Frame(self.window,bg="white", cursor='sb_v_double_arrow')
         self.resizey_widget.place(relx=0, rely=1, anchor="sw", relwidth=1, height=5)
-        # self.resizey_widget2 = tk.Frame(self, bg="white", cursor='sb_v_double_arrow')
-        # self.resizey_widget2.place(relx=0, rely=0, anchor="nw", relwidth=1, height=5)
+        self.resizey_widget2 = tk.Frame(self, bg="white", cursor='sb_v_double_arrow')
+        self.resizey_widget2.place(relx=0, rely=0, anchor="nw", relwidth=1, height=5)
 
         self.resizexy_widget = tk.Frame(self.window,bg="white", cursor='size_nw_se')
         self.resizexy_widget.place(relx=1, rely=1, anchor="se", width=10, height=10)
 
-
         self.window.pack(expand=1, fill="both") # replace this with your main Canvas/Frame/etc.
-        #xwin=None
-        #ywin=None
 
-        self.resizex_widget.bind("<B1-Motion>", lambda event, arg="x": self.resizexy(event, arg))
-        # self.resizex_widget2.bind("<B1-Motion>",self.resizex)
-        self.resizey_widget.bind("<B1-Motion>", lambda event, arg="y": self.resizexy(event, arg))
-        # self.resizey_widget2.bind("<B1-Motion>",self.resizey)
-        self.resizexy_widget.bind("<B1-Motion>", lambda event, arg="xy": self.resizexy(event, arg))
+        self.resizex_widget.bind("<B1-Motion>", lambda event, arg=("x","e"): self.resizexy(event, arg))
+        self.resizex_widget2.bind("<B1-Motion>", lambda event, arg=("x","w"): self.resizexy(event, arg))
+        self.resizey_widget.bind("<B1-Motion>", lambda event, arg=("y","s"): self.resizexy(event, arg))
+        self.resizey_widget2.bind("<B1-Motion>", lambda event, arg=("y","n"): self.resizexy(event, arg))
+        self.resizexy_widget.bind("<B1-Motion>", lambda event, arg=("x","y","e","s"): self.resizexy(event, arg))
 
-    def set_appwindow(self): # to display the window icon on the taskbar, 
-                                # even when using self.overrideredirect(True
+    def set_appwindow(self): 
+        # to display the window icon on the taskbar, 
+        # even when using self.overrideredirect(True
         # Some WindowsOS styles, required for task bar integration
         GWL_EXSTYLE = -20
         WS_EX_APPWINDOW = 0x00040000
@@ -209,31 +201,44 @@ class App(tk.Tk):
     
         self.wm_withdraw()
         self.after_idle(self.wm_deiconify)
+        self.geometry(self.geom)
 
     def resizexy(self, event, direction):
+        newx = self.winfo_x()
+        newy = self.winfo_y()
+
         if "x" in direction:
             xwin = self.winfo_x()
-            xdifference = (event.x_root - xwin) - self.winfo_width()
+            xdifference = event.x_root - xwin
+            if "e" in direction:
+                xdifference = xdifference - self.winfo_width()
+                if self.winfo_width() + xdifference < self.minsize()[0]:
+                    xdifference = self.minsize()[0] - self.winfo_width()
+            else:
+                xdifference = -xdifference
+                if self.winfo_width() + xdifference < self.minsize()[0]:
+                    xdifference = 0
+                newx = self.winfo_x() - xdifference
         else:
             xdifference = 0
 
         if "y" in direction:
             ywin = self.winfo_y()
-            ydifference = (event.y_root - ywin) - self.winfo_height()
+            ydifference = event.y_root - ywin
+            if "s" in direction:
+                ydifference = ydifference - self.winfo_height()
+                if self.winfo_height() + ydifference < self.minsize()[1]:
+                    ydifference =  self.minsize()[1] - self.winfo_height()
+            else:
+                ydifference = -ydifference
+                if self.winfo_height() + ydifference < self.minsize()[1]:
+                    ydifference = 0
+                newy = self.winfo_y() - ydifference
         else:
             ydifference = 0
 
-        try:
-            self.geometry(f"{ self.winfo_width() + xdifference }x{ self.winfo_height() + ydifference}")
-        except:
-            pass
+        self.geometry(f"{ self.winfo_width() + xdifference}x{ self.winfo_height() + ydifference}+{newx}+{newy}")
 
-        try:
-            self.geometry(f"{ self.winfo_width()  + xdifference}x{ self.winfo_height() + ydifference}")
-        except:
-            pass
-
-        # resizexy_widget.config(bg=DGRAY)
 
 if __name__ == "__main__":
-    App(title="MyApp")
+    App(title="MyApp", titlebarcolor="red")
