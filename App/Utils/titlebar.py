@@ -136,6 +136,7 @@ class App(tk.Tk):
         super().__init__()
         self.title(title) 
         self.title = title
+        self.titlebarcolor = titlebarcolor
         self.overrideredirect(True) # turns off title bar, geometry
         self.geom = f'{width}x{height}+1200+300'
         self.geometry(self.geom)
@@ -162,28 +163,38 @@ class App(tk.Tk):
     def resizeSetup(self):
         # a frame for the main area of the window, this is where the actual app will go
         self.window = tk.Frame(self, bg=Colors.DGRAY, highlightthickness=0)
-        
-        # resize widgets
-        self.resizex_widget = tk.Frame(self.window, bg="white", cursor="sb_h_double_arrow")
-        self.resizex_widget.pack(side="right", ipadx=2, fill="y")
-        self.resizex_widget2 = tk.Frame(self.window, bg="white", cursor="sb_h_double_arrow")
-        self.resizex_widget2.pack(side="left", ipadx=2, fill="y")
+        self.window.pack(expand=1, fill="both") # replace this with your main Canvas/Frame/etc.
 
-        self.resizey_widget = tk.Frame(self.window,bg="white", cursor='sb_v_double_arrow')
+        frame_size = 3
+        # resize widgets
+        self.resizex_widget = tk.Frame(self, bg=self.titlebarcolor, cursor="sb_h_double_arrow")
+        self.resizex_widget.place(relx=1, relheight=1, anchor="ne", width=5)#, ipadx=2, fill="y")
+        self.resizex_widget2 = tk.Frame(self, bg=self.titlebarcolor, cursor="sb_h_double_arrow")
+        self.resizex_widget2.place(relx=0, relheight=1, anchor="nw", width=5)#, ipadx=2, fill="y")
+
+        self.resizey_widget = tk.Frame(self,bg=self.titlebarcolor, cursor='sb_v_double_arrow')
         self.resizey_widget.place(relx=0, rely=1, anchor="sw", relwidth=1, height=5)
-        self.resizey_widget2 = tk.Frame(self, bg="white", cursor='sb_v_double_arrow')
+        self.resizey_widget2 = tk.Frame(self, bg=self.titlebarcolor, cursor='sb_v_double_arrow')
         self.resizey_widget2.place(relx=0, rely=0, anchor="nw", relwidth=1, height=5)
 
-        self.resizexy_widget = tk.Frame(self.window,bg="white", cursor='size_nw_se')
-        self.resizexy_widget.place(relx=1, rely=1, anchor="se", width=10, height=10)
-
-        self.window.pack(expand=1, fill="both") # replace this with your main Canvas/Frame/etc.
+        corner_size = 3
+        self.resizexy_widget_se = tk.Frame(self, bg=self.titlebarcolor, cursor='size_nw_se')
+        self.resizexy_widget_se.place(relx=1, rely=1, anchor="se", width=corner_size, height=corner_size)
+        self.resizexy_widget_sw = tk.Frame(self, bg=self.titlebarcolor, cursor='size_ne_sw')
+        self.resizexy_widget_sw.place(relx=0, rely=1, anchor="sw", width=corner_size, height=corner_size)
+        self.resizexy_widget_nw = tk.Frame(self, bg=self.titlebarcolor, cursor='size_nw_se')
+        self.resizexy_widget_nw.place(relx=0, rely=0, anchor="nw", width=corner_size, height=corner_size)
+        self.resizexy_widget_ne = tk.Frame(self, bg=self.titlebarcolor, cursor='size_ne_sw')
+        self.resizexy_widget_ne.place(relx=1, rely=0, anchor="ne", width=corner_size, height=corner_size)
 
         self.resizex_widget.bind("<B1-Motion>", lambda event, arg=("x","e"): self.resizexy(event, arg))
         self.resizex_widget2.bind("<B1-Motion>", lambda event, arg=("x","w"): self.resizexy(event, arg))
         self.resizey_widget.bind("<B1-Motion>", lambda event, arg=("y","s"): self.resizexy(event, arg))
         self.resizey_widget2.bind("<B1-Motion>", lambda event, arg=("y","n"): self.resizexy(event, arg))
-        self.resizexy_widget.bind("<B1-Motion>", lambda event, arg=("x","y","e","s"): self.resizexy(event, arg))
+        self.resizexy_widget_se.bind("<B1-Motion>", lambda event, arg=("x","y","s","e"): self.resizexy(event, arg))
+        self.resizexy_widget_sw.bind("<B1-Motion>", lambda event, arg=("x","y","s","w"): self.resizexy(event, arg))
+        self.resizexy_widget_nw.bind("<B1-Motion>", lambda event, arg=("x","y","n","w"): self.resizexy(event, arg))
+        self.resizexy_widget_ne.bind("<B1-Motion>", lambda event, arg=("x","y","n","e"): self.resizexy(event, arg))
 
     def set_appwindow(self): 
         # to display the window icon on the taskbar, 
@@ -241,4 +252,4 @@ class App(tk.Tk):
 
 
 if __name__ == "__main__":
-    App(title="MyApp", titlebarcolor="red")
+    App(title="MyApp", titlebarcolor="#333333")
