@@ -1,6 +1,5 @@
 import customtkinter as ctk
 import tkinter as tk
-from Utils import utils
 from Utils import titlebar as tb
 
 class BaseFrame(ctk.CTkFrame):
