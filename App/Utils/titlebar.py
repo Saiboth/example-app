@@ -1,4 +1,5 @@
-import tkinter as tk
+import customtkinter as ctk
+from tkinter import TclError
 from ctypes import windll
 
 class Colors:
@@ -8,18 +9,19 @@ class Colors:
     RGRAY = '#0e0e0e' # title bar color                       (Hex color)
     RED = '#ae0d1a'
 
-class Titlebar(tk.Frame):
-    def __init__(self, parent=None, title="", titlebarcolor=Colors.DGRAY) -> None:
-        super().__init__()
-        self.config(bg=titlebarcolor, relief='raised', bd=0, highlightthickness=0)
+class Titlebar(ctk.CTkFrame):
+    def __init__(self, parent=None, title="", titlebarcolor="#333333", foreground="#ffffff") -> None:
+        super().__init__(master=parent)
+        self.configure(bg_color=titlebarcolor)#, relief='raised', bd=0, highlightthickness=0)
         self.parent = parent
         self.titlebarcolor = titlebarcolor
+        self.fg = foreground
 
         # add buttons to the title bar
-        self.title = tk.Label(self, text=title, bg=self.titlebarcolor,bd=0,fg='white',font=("helvetica", 10),highlightthickness=0, padx=5)
-        self.close_button = tk.Button(self, text='  ×  ', command=parent.destroy,bg=self.titlebarcolor,padx=2,pady=2,font=("calibri", 13),bd=0,fg='white',highlightthickness=0)
-        self.expand_button = tk.Button(self, text=' 🗖 ', command=self.maximize_me,bg=self.titlebarcolor,padx=2,pady=2,bd=0,fg='white',font=("calibri", 13),highlightthickness=0)
-        self.minimize_button = tk.Button(self, text=' ⎯ ',command=self.minimize_me,bg=self.titlebarcolor,padx=2,pady=2,bd=0,fg='white',font=("calibri", 13),highlightthickness=0)
+        self.title = ctk.CTkLabel(self, text=title, font=("helvetica", 10), padx=5)
+        self.close_button = ctk.CTkButton(self, text='  ×  ', command=parent.destroy,font=("calibri", 13))
+        self.expand_button = ctk.CTkButton(self, text=' 🗖 ', command=self.maximize_me,font=("calibri", 13))
+        self.minimize_button = ctk.CTkButton(self, text=' ⎯ ',command=self.minimize_me,font=("calibri", 13))
 
         # pack the widgets
         self.title.pack(side="left", padx=10)
@@ -62,7 +64,7 @@ class Titlebar(tk.Frame):
             w.x = locx
             w.y = locy
             self.maximize_me()
-            self.expand_button.config(text=" 🗖 ")
+            self.expand_button.configure(text=" 🗖 ")
         else:
             w.x = event.x
             w.y = event.y
@@ -88,7 +90,7 @@ class Titlebar(tk.Frame):
     def safe_iconify(self):
         try:
             self.parent.iconify()
-        except tk.TclError: 
+        except TclError: 
             pass
 
     def deminimize(self, event):
@@ -104,12 +106,14 @@ class Titlebar(tk.Frame):
     def maximize_me(self, *args):
         if self.parent.maximized == False:
             self.normal_size = self.parent.geometry()
-            self.expand_button.config(text=" 🗗 ")
-            self.parent.geometry(f"{self.parent.winfo_screenwidth()}x{self.parent.winfo_screenheight()}+0+0")
+            self.expand_button.configure(text=" 🗗 ")
+            w = self.parent.winfo_screenwidth()
+            h = self.parent.winfo_screenheight()
+            self.parent.geometry(f"{w}x{h}+0+0")
             self.parent.maximized = not self.parent.maximized 
             
         else:
-            self.expand_button.config(text=" 🗖 ")
+            self.expand_button.configure(text=" 🗖 ")
             self.parent.geometry(self.normal_size)
             self.parent.maximized = not self.parent.maximized
 
@@ -131,8 +135,8 @@ class Titlebar(tk.Frame):
     def returnm_size_on_hovering(self, event):
         self.minimize_button['bg']=self.titlebarcolor
 
-class App(tk.Tk):
-    def __init__(self, title="", width=400, height=200, titlebarcolor=Colors.DGRAY) -> None:
+class App(ctk.CTk):
+    def __init__(self, title="", width=400, height=200, titlebarcolor="") -> None:
         super().__init__()
         self.title(title) 
         self.title = title
@@ -145,7 +149,7 @@ class App(tk.Tk):
         self.minimized = False
         self.maximized = False
 
-        self.config(bg=Colors.LGRAY2, borderwidth=1)
+        self.configure(bg=Colors.LGRAY2, borderwidth=1)
         self.titlebar = Titlebar(self, self.title, titlebarcolor)
         self.resizeSetup()
 
@@ -158,34 +162,34 @@ class App(tk.Tk):
         self.update_idletasks()
         self.deiconify()
 
-        self.mainloop()
+        # self.mainloop()
 
     def resizeSetup(self):
         # a frame for the main area of the window, this is where the actual app will go
-        self.window = tk.Frame(self, bg=Colors.DGRAY, highlightthickness=0)
+        self.window = ctk.CTkFrame(self)
         self.window.pack(expand=1, fill="both") # replace this with your main Canvas/Frame/etc.
 
         frame_size = 3
         # resize widgets
-        self.resizex_widget = tk.Frame(self, bg=self.titlebarcolor, cursor="sb_h_double_arrow")
-        self.resizex_widget.place(relx=1, relheight=1, anchor="ne", width=5)#, ipadx=2, fill="y")
-        self.resizex_widget2 = tk.Frame(self, bg=self.titlebarcolor, cursor="sb_h_double_arrow")
-        self.resizex_widget2.place(relx=0, relheight=1, anchor="nw", width=5)#, ipadx=2, fill="y")
+        self.resizex_widget = ctk.CTkFrame(self, cursor="sb_h_double_arrow", width=5)
+        self.resizex_widget.place(relx=1, relheight=1, anchor="ne")#, ipadx=2, fill="y")
+        self.resizex_widget2 = ctk.CTkFrame(self, cursor="sb_h_double_arrow", width=5)
+        self.resizex_widget2.place(relx=0, relheight=1, anchor="nw")#, ipadx=2, fill="y")
 
-        self.resizey_widget = tk.Frame(self,bg=self.titlebarcolor, cursor='sb_v_double_arrow')
-        self.resizey_widget.place(relx=0, rely=1, anchor="sw", relwidth=1, height=5)
-        self.resizey_widget2 = tk.Frame(self, bg=self.titlebarcolor, cursor='sb_v_double_arrow')
-        self.resizey_widget2.place(relx=0, rely=0, anchor="nw", relwidth=1, height=5)
+        self.resizey_widget = ctk.CTkFrame(self, cursor='sb_v_double_arrow', height=5)
+        self.resizey_widget.place(relx=0, rely=1, anchor="sw", relwidth=1)
+        self.resizey_widget2 = ctk.CTkFrame(self, cursor='sb_v_double_arrow', height=5)
+        self.resizey_widget2.place(relx=0, rely=0, anchor="nw", relwidth=1)
 
         corner_size = 3
-        self.resizexy_widget_se = tk.Frame(self, bg=self.titlebarcolor, cursor='size_nw_se')
-        self.resizexy_widget_se.place(relx=1, rely=1, anchor="se", width=corner_size, height=corner_size)
-        self.resizexy_widget_sw = tk.Frame(self, bg=self.titlebarcolor, cursor='size_ne_sw')
-        self.resizexy_widget_sw.place(relx=0, rely=1, anchor="sw", width=corner_size, height=corner_size)
-        self.resizexy_widget_nw = tk.Frame(self, bg=self.titlebarcolor, cursor='size_nw_se')
-        self.resizexy_widget_nw.place(relx=0, rely=0, anchor="nw", width=corner_size, height=corner_size)
-        self.resizexy_widget_ne = tk.Frame(self, bg=self.titlebarcolor, cursor='size_ne_sw')
-        self.resizexy_widget_ne.place(relx=1, rely=0, anchor="ne", width=corner_size, height=corner_size)
+        self.resizexy_widget_se = ctk.CTkFrame(self, cursor='size_nw_se', width=corner_size, height=corner_size)
+        self.resizexy_widget_se.place(relx=1, rely=1, anchor="se")
+        self.resizexy_widget_sw = ctk.CTkFrame(self, cursor='size_ne_sw', width=corner_size, height=corner_size)
+        self.resizexy_widget_sw.place(relx=0, rely=1, anchor="sw")
+        self.resizexy_widget_nw = ctk.CTkFrame(self, cursor='size_nw_se', width=corner_size, height=corner_size)
+        self.resizexy_widget_nw.place(relx=0, rely=0, anchor="nw")
+        self.resizexy_widget_ne = ctk.CTkFrame(self, cursor='size_ne_sw', width=corner_size, height=corner_size)
+        self.resizexy_widget_ne.place(relx=1, rely=0, anchor="ne")
 
         self.resizex_widget.bind("<B1-Motion>", lambda event, arg=("x","e"): self.resizexy(event, arg))
         self.resizex_widget2.bind("<B1-Motion>", lambda event, arg=("x","w"): self.resizexy(event, arg))
@@ -217,39 +221,43 @@ class App(tk.Tk):
     def resizexy(self, event, direction):
         newx = self.winfo_x()
         newy = self.winfo_y()
+        min_height = self.wm_minsize()[1]
+        min_width = self.wm_minsize()[0]
+        w = self.winfo_width()
+        h = self.winfo_height()
+
+        xdifference = 0
+        ydifference = 0
 
         if "x" in direction:
             xwin = self.winfo_x()
             xdifference = event.x_root - xwin
             if "e" in direction:
-                xdifference = xdifference - self.winfo_width()
-                if self.winfo_width() + xdifference < self.minsize()[0]:
-                    xdifference = self.minsize()[0] - self.winfo_width()
+                xdifference = xdifference - w
+                if w + xdifference < min_width:
+                    xdifference = min_width - w
             else:
                 xdifference = -xdifference
-                if self.winfo_width() + xdifference < self.minsize()[0]:
+                if w + xdifference < min_width:
                     xdifference = 0
-                newx = self.winfo_x() - xdifference
-        else:
-            xdifference = 0
+                newx = xwin - xdifference
 
         if "y" in direction:
             ywin = self.winfo_y()
             ydifference = event.y_root - ywin
             if "s" in direction:
-                ydifference = ydifference - self.winfo_height()
-                if self.winfo_height() + ydifference < self.minsize()[1]:
-                    ydifference =  self.minsize()[1] - self.winfo_height()
+                ydifference = ydifference - h
+                if h + ydifference < min_height:
+                    ydifference =  min_height - h
             else:
                 ydifference = -ydifference
-                if self.winfo_height() + ydifference < self.minsize()[1]:
+                if h + ydifference < min_height:
                     ydifference = 0
-                newy = self.winfo_y() - ydifference
-        else:
-            ydifference = 0
+                newy = ywin - ydifference
 
-        self.geometry(f"{ self.winfo_width() + xdifference}x{ self.winfo_height() + ydifference}+{newx}+{newy}")
+        self.wm_geometry(f"{w + xdifference}x{h + ydifference}+{newx}+{newy}")
 
 
 if __name__ == "__main__":
-    App(title="MyApp", titlebarcolor="#333333")
+    app = App(title="MyApp", titlebarcolor="#333333")
+    app.mainloop()
