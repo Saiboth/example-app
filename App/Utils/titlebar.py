@@ -2,26 +2,40 @@ import customtkinter as ctk
 from tkinter import TclError
 from ctypes import windll
 
+
 class Colors:
-    LGRAY = '#3e4042' # button color effects in the title bar (Hex color)
-    LGRAY2 = '#3a3a3a' #3a3a3a
-    DGRAY = '#0d1117' # window background color               (Hex color)
-    RGRAY = '#0e0e0e' # title bar color                       (Hex color)
-    RED = '#ae0d1a'
+    LGRAY = "#3e4042"  # button color effects in the title bar (Hex color)
+    LGRAY2 = "#3a3a3a"  # 3a3a3a
+    DGRAY = "#0d1117"  # window background color               (Hex color)
+    RGRAY = "#0e0e0e"  # title bar color                       (Hex color)
+    RED = "#ae0d1a"
+
 
 class Titlebar(ctk.CTkFrame):
-    def __init__(self, parent=None, title="", titlebarcolor="#333333", foreground="#ffffff") -> None:
+    def __init__(
+        self, parent, title="", titlebarcolor="#333333", foreground="#ffffff"
+    ) -> None:
         super().__init__(master=parent)
-        self.configure(bg_color=titlebarcolor)#, relief='raised', bd=0, highlightthickness=0)
+        self.configure(
+            bg_color=titlebarcolor
+        )  # , relief='raised', bd=0, highlightthickness=0)
         self.parent = parent
-        self.titlebarcolor = titlebarcolor
-        self.fg = foreground
+        self.titlebarcolor: str = titlebarcolor
+        self.fg: str = foreground
 
         # add buttons to the title bar
-        self.title = ctk.CTkLabel(self, text=title, font=("helvetica", 10), padx=5)
-        self.close_button = ctk.CTkButton(self, text='  ×  ', command=parent.destroy,font=("calibri", 13))
-        self.expand_button = ctk.CTkButton(self, text=' 🗖 ', command=self.maximize_me,font=("calibri", 13))
-        self.minimize_button = ctk.CTkButton(self, text=' ⎯ ',command=self.minimize_me,font=("calibri", 13))
+        self.title = ctk.CTkLabel(
+            master=self, text=title, font=("helvetica", 10), padx=5
+        )
+        self.close_button = ctk.CTkButton(
+            master=self, text="  ×  ", command=parent.destroy, font=("calibri", 13)
+        )
+        self.expand_button = ctk.CTkButton(
+            master=self, text=" 🗖 ", command=self.maximize_me, font=("calibri", 13)
+        )
+        self.minimize_button = ctk.CTkButton(
+            master=self, text=" ⎯ ", command=self.minimize_me, font=("calibri", 13)
+        )
 
         # pack the widgets
         self.title.pack(side="left", padx=10)
@@ -31,36 +45,49 @@ class Titlebar(ctk.CTkFrame):
         self.pack(fill="x")
 
         # bind double click to maximize method
-        self.bind('<Double-Button-1>', self.maximize_me)
+        self.bind(sequence="<Double-Button-1>", command=self.maximize_me)
 
         # hover effects for buttons
-        self.close_button.bind('<Enter>', self.changex_on_hovering)
-        self.close_button.bind('<Leave>',self.returnx_to_normalstate)
-        self.expand_button.bind('<Enter>', self.change_size_on_hovering)
-        self.expand_button.bind('<Leave>', self.return_size_on_hovering)
-        self.minimize_button.bind('<Enter>', self.changem_size_on_hovering)
-        self.minimize_button.bind('<Leave>', self.returnm_size_on_hovering)
+        self.close_button.bind(sequence="<Enter>", command=self.changex_on_hovering)
+        self.close_button.bind(sequence="<Leave>", command=self.returnx_to_normalstate)
+        self.expand_button.bind(
+            sequence="<Enter>", command=self.change_size_on_hovering
+        )
+        self.expand_button.bind(
+            sequence="<Leave>", command=self.return_size_on_hovering
+        )
+        self.minimize_button.bind(
+            sequence="<Enter>", command=self.changem_size_on_hovering
+        )
+        self.minimize_button.bind(
+            sequence="<Leave>", command=self.returnm_size_on_hovering
+        )
 
         # bind move to frame and label
-        self.bindMove(self)
-        self.bindMove(self.title)
+        self.bindMove(widget=self)
+        self.bindMove(widget=self.title)
 
-    def bindMove(self, widget):
+    def bindMove(self, widget) -> None:
         w = self
         if widget:
             w = widget
-        w.bind("<Button-1>", lambda event, arg=w: self.startMove(event, arg))
-        w.bind("<B1-Motion>", lambda event, arg=w: self.moving(event, arg))
+        w.bind("<Button-1>", lambda event, arg=w: self.startMove(event=event, w=arg))
+        w.bind("<B1-Motion>", lambda event, arg=w: self.moving(event=event, w=arg))
 
         # self.bind("<Map>",self.frame_mapped)
 
-    def startMove(self, event, w):
+    def startMove(self, event, w) -> None:
         # get relative click position when maximized and return to old size on drag
         if self.parent.maximized == True:
-            normalx, normaly = self.get_geometry_xy(self.normal_size)
-            maxx, maxy = self.get_geometry_xy(self.parent.geometry())
-            locx = int(event.x/ maxx * normalx)
-            locy = int(event.y/ maxy * normaly)
+            normalx: int
+            normaly: int
+            maxx: int
+            maxy: int
+
+            normalx, normaly = self.get_geometry_xy(geom=self.normal_size)
+            maxx, maxy = self.get_geometry_xy(geom=self.parent.geometry())
+            locx = int(event.x / maxx * normalx)
+            locy = int(event.y / maxy * normaly)
             w.x = locx
             w.y = locy
             self.maximize_me()
@@ -69,139 +96,208 @@ class Titlebar(ctk.CTkFrame):
             w.x = event.x
             w.y = event.y
 
-    def moving(self, event, w):
-        x = (event.x_root - w.x - w.winfo_rootx() + self.winfo_rootx())
-        y = (event.y_root - w.y - w.winfo_rooty() + self.winfo_rooty())
+    def moving(self, event, w) -> None:
+        x: int = event.x_root - w.x - w.winfo_rootx() + self.winfo_rootx()
+        y: int = event.y_root - w.y - w.winfo_rooty() + self.winfo_rooty()
         self.parent.geometry(f"+{x}+{y}")
 
-    def get_geometry_xy(self, geom):
+    def get_geometry_xy(self, geom) -> list[int]:
         xy = geom.split("+")[0]
         return [int(val) for val in xy.split("x")]
 
-    def minimize_me(self, event=None):
+    def minimize_me(self, event=None) -> None:
         if self.parent.minimized == False:
             self.parent.update_idletasks()
             self.parent.overrideredirect(False)
             self.parent.unbind("<FocusOut>")
             self.parent.update_idletasks()
             self.parent.after_idle(self.safe_iconify)
-            self.parent.minimized = True       
+            self.parent.minimized = True
 
-    def safe_iconify(self):
+    def safe_iconify(self) -> None:
         try:
             self.parent.iconify()
-        except TclError: 
+        except TclError:
             pass
 
-    def deminimize(self, event):
+    def deminimize(self, event) -> None:
         if self.parent.minimized == True:
             self.parent.iconify()
             self.parent.overrideredirect(True)
             self.parent.set_appwindow()
             self.parent.deiconify()
             self.parent.focus()
-            self.parent.after_idle(lambda: self.bind("<FocusOut>", self.minimize_me))
-            self.parent.minimized = False                              
+            self.parent.after_idle(
+                lambda: self.bind(sequence="<FocusOut>", command=self.minimize_me)
+            )
+            self.parent.minimized = False
 
-    def maximize_me(self, *args):
+    def maximize_me(self, *args) -> None:
         if self.parent.maximized == False:
-            self.normal_size = self.parent.geometry()
+            self.normal_size: str = self.parent.geometry()
             self.expand_button.configure(text=" 🗗 ")
-            w = self.parent.winfo_screenwidth()
-            h = self.parent.winfo_screenheight()
+            w: int = self.parent.winfo_screenwidth()
+            h: int = self.parent.winfo_screenheight()
             self.parent.geometry(f"{w}x{h}+0+0")
-            self.parent.maximized = not self.parent.maximized 
-            
+            self.parent.maximized = not self.parent.maximized
+
         else:
             self.expand_button.configure(text=" 🗖 ")
             self.parent.geometry(self.normal_size)
             self.parent.maximized = not self.parent.maximized
 
-    def changex_on_hovering(self, event):
-        self.close_button['bg']=Colors.RED
-        
-    def returnx_to_normalstate(self, event):
-        self.close_button['bg']=self.titlebarcolor
-        
-    def change_size_on_hovering(self, event):
-        self.expand_button['bg']=Colors.LGRAY
-        
-    def return_size_on_hovering(self, event):
-        self.expand_button['bg']=self.titlebarcolor
-        
-    def changem_size_on_hovering(self, event):
-        self.minimize_button['bg']=Colors.LGRAY
-        
-    def returnm_size_on_hovering(self, event):
-        self.minimize_button['bg']=self.titlebarcolor
+    def changex_on_hovering(self, event) -> None:
+        self.close_button["bg"] = Colors.RED
+
+    def returnx_to_normalstate(self, event) -> None:
+        self.close_button["bg"] = self.titlebarcolor
+
+    def change_size_on_hovering(self, event) -> None:
+        self.expand_button["bg"] = Colors.LGRAY
+
+    def return_size_on_hovering(self, event) -> None:
+        self.expand_button["bg"] = self.titlebarcolor
+
+    def changem_size_on_hovering(self, event) -> None:
+        self.minimize_button["bg"] = Colors.LGRAY
+
+    def returnm_size_on_hovering(self, event) -> None:
+        self.minimize_button["bg"] = self.titlebarcolor
+
 
 class App(ctk.CTk):
     def __init__(self, title="", width=400, height=200, titlebarcolor="") -> None:
         super().__init__()
-        self.title(title) 
-        self.title = title
-        self.titlebarcolor = titlebarcolor
-        self.overrideredirect(True) # turns off title bar, geometry
-        self.geom = f'{width}x{height}+1200+300'
-        self.geometry(self.geom)
+        self.title(string=title)
+        self.titlestring: str = title
+        self.titlebarcolor: str = titlebarcolor
+        self.overrideredirect(boolean=True)  # turns off title bar, geometry
+        self.geom: str = f"{width}x{height}+1200+300"
+        self.geometry(geometry_string=self.geom)
         self.minsize(width=width, height=height)
-        # self.iconbitmap("your_icon.ico") # to show your own icon 
+        # self.iconbitmap("your_icon.ico") # to show your own icon
         self.minimized = False
         self.maximized = False
 
         self.configure(bg=Colors.LGRAY2, borderwidth=1)
-        self.titlebar = Titlebar(self, self.title, titlebarcolor)
+        self.titlebar = Titlebar(
+            parent=self, title=self.titlestring, titlebarcolor=titlebarcolor
+        )
         self.resizeSetup()
 
         # some settings
-        self.bind("<FocusOut>", self.titlebar.minimize_me)
-        self.bind("<FocusIn>", self.titlebar.deminimize) # to view the window by clicking on the window icon on the taskbar
+        self.bind(sequence="<FocusOut>", func=self.titlebar.minimize_me)
+        self.bind(
+            sequence="<FocusIn>", func=self.titlebar.deminimize
+        )  # to view the window by clicking on the window icon on the taskbar
 
         self.update_idletasks()
-        self.after_idle(self.set_appwindow) # to see the icon on the task bar
+        self.after_idle(func=self.set_appwindow)  # to see the icon on the task bar
         self.update_idletasks()
         self.deiconify()
 
         # self.mainloop()
 
-    def resizeSetup(self):
+    def resizeSetup(self) -> None:
         # a frame for the main area of the window, this is where the actual app will go
-        self.window = ctk.CTkFrame(self)
-        self.window.pack(expand=1, fill="both") # replace this with your main Canvas/Frame/etc.
+        self.window = ctk.CTkFrame(master=self)
+        self.window.pack(
+            expand=1, fill="both"
+        )  # replace this with your main Canvas/Frame/etc.
 
         frame_size = 3
         # resize widgets
-        self.resizex_widget = ctk.CTkFrame(self, cursor="sb_h_double_arrow", width=5)
-        self.resizex_widget.place(relx=1, relheight=1, anchor="ne")#, ipadx=2, fill="y")
-        self.resizex_widget2 = ctk.CTkFrame(self, cursor="sb_h_double_arrow", width=5)
-        self.resizex_widget2.place(relx=0, relheight=1, anchor="nw")#, ipadx=2, fill="y")
+        self.resizex_widget = ctk.CTkFrame(
+            master=self, cursor="sb_h_double_arrow", width=5
+        )
+        self.resizex_widget.place(
+            relx=1, relheight=1, anchor="ne"
+        )  # , ipadx=2, fill="y")
+        self.resizex_widget2 = ctk.CTkFrame(
+            master=self, cursor="sb_h_double_arrow", width=5
+        )
+        self.resizex_widget2.place(
+            relx=0, relheight=1, anchor="nw"
+        )  # , ipadx=2, fill="y")
 
-        self.resizey_widget = ctk.CTkFrame(self, cursor='sb_v_double_arrow', height=5)
+        self.resizey_widget = ctk.CTkFrame(
+            master=self, cursor="sb_v_double_arrow", height=5
+        )
         self.resizey_widget.place(relx=0, rely=1, anchor="sw", relwidth=1)
-        self.resizey_widget2 = ctk.CTkFrame(self, cursor='sb_v_double_arrow', height=5)
+        self.resizey_widget2 = ctk.CTkFrame(
+            master=self, cursor="sb_v_double_arrow", height=5
+        )
         self.resizey_widget2.place(relx=0, rely=0, anchor="nw", relwidth=1)
 
         corner_size = 3
-        self.resizexy_widget_se = ctk.CTkFrame(self, cursor='size_nw_se', width=corner_size, height=corner_size)
+        self.resizexy_widget_se = ctk.CTkFrame(
+            master=self, cursor="size_nw_se", width=corner_size, height=corner_size
+        )
         self.resizexy_widget_se.place(relx=1, rely=1, anchor="se")
-        self.resizexy_widget_sw = ctk.CTkFrame(self, cursor='size_ne_sw', width=corner_size, height=corner_size)
+        self.resizexy_widget_sw = ctk.CTkFrame(
+            master=self, cursor="size_ne_sw", width=corner_size, height=corner_size
+        )
         self.resizexy_widget_sw.place(relx=0, rely=1, anchor="sw")
-        self.resizexy_widget_nw = ctk.CTkFrame(self, cursor='size_nw_se', width=corner_size, height=corner_size)
+        self.resizexy_widget_nw = ctk.CTkFrame(
+            master=self, cursor="size_nw_se", width=corner_size, height=corner_size
+        )
         self.resizexy_widget_nw.place(relx=0, rely=0, anchor="nw")
-        self.resizexy_widget_ne = ctk.CTkFrame(self, cursor='size_ne_sw', width=corner_size, height=corner_size)
+        self.resizexy_widget_ne = ctk.CTkFrame(
+            master=self, cursor="size_ne_sw", width=corner_size, height=corner_size
+        )
         self.resizexy_widget_ne.place(relx=1, rely=0, anchor="ne")
 
-        self.resizex_widget.bind("<B1-Motion>", lambda event, arg=("x","e"): self.resizexy(event, arg))
-        self.resizex_widget2.bind("<B1-Motion>", lambda event, arg=("x","w"): self.resizexy(event, arg))
-        self.resizey_widget.bind("<B1-Motion>", lambda event, arg=("y","s"): self.resizexy(event, arg))
-        self.resizey_widget2.bind("<B1-Motion>", lambda event, arg=("y","n"): self.resizexy(event, arg))
-        self.resizexy_widget_se.bind("<B1-Motion>", lambda event, arg=("x","y","s","e"): self.resizexy(event, arg))
-        self.resizexy_widget_sw.bind("<B1-Motion>", lambda event, arg=("x","y","s","w"): self.resizexy(event, arg))
-        self.resizexy_widget_nw.bind("<B1-Motion>", lambda event, arg=("x","y","n","w"): self.resizexy(event, arg))
-        self.resizexy_widget_ne.bind("<B1-Motion>", lambda event, arg=("x","y","n","e"): self.resizexy(event, arg))
+        self.resizex_widget.bind(
+            sequence="<B1-Motion>",
+            command=lambda event, arg=("x", "e"): self.resizexy(
+                event=event, direction=arg
+            ),
+        )
+        self.resizex_widget2.bind(
+            sequence="<B1-Motion>",
+            command=lambda event, arg=("x", "w"): self.resizexy(
+                event=event, direction=arg
+            ),
+        )
+        self.resizey_widget.bind(
+            sequence="<B1-Motion>",
+            command=lambda event, arg=("y", "s"): self.resizexy(
+                event=event, direction=arg
+            ),
+        )
+        self.resizey_widget2.bind(
+            sequence="<B1-Motion>",
+            command=lambda event, arg=("y", "n"): self.resizexy(
+                event=event, direction=arg
+            ),
+        )
+        self.resizexy_widget_se.bind(
+            sequence="<B1-Motion>",
+            command=lambda event, arg=("x", "y", "s", "e"): self.resizexy(
+                event=event, direction=arg
+            ),
+        )
+        self.resizexy_widget_sw.bind(
+            sequence="<B1-Motion>",
+            command=lambda event, arg=("x", "y", "s", "w"): self.resizexy(
+                event=event, direction=arg
+            ),
+        )
+        self.resizexy_widget_nw.bind(
+            sequence="<B1-Motion>",
+            command=lambda event, arg=("x", "y", "n", "w"): self.resizexy(
+                event=event, direction=arg
+            ),
+        )
+        self.resizexy_widget_ne.bind(
+            sequence="<B1-Motion>",
+            command=lambda event, arg=("x", "y", "n", "e"): self.resizexy(
+                event=event, direction=arg
+            ),
+        )
 
-    def set_appwindow(self): 
-        # to display the window icon on the taskbar, 
+    def set_appwindow(self) -> None:
+        # to display the window icon on the taskbar,
         # even when using self.overrideredirect(True
         # Some WindowsOS styles, required for task bar integration
         GWL_EXSTYLE = -20
@@ -213,25 +309,25 @@ class App(ctk.CTk):
         stylew = stylew & ~WS_EX_TOOLWINDOW
         stylew = stylew | WS_EX_APPWINDOW
         res = windll.user32.SetWindowLongW(hwnd, GWL_EXSTYLE, stylew)
-    
-        self.wm_withdraw()
-        self.after_idle(self.wm_deiconify)
-        self.geometry(self.geom)
 
-    def resizexy(self, event, direction):
-        newx = self.winfo_x()
-        newy = self.winfo_y()
-        min_height = self.wm_minsize()[1]
-        min_width = self.wm_minsize()[0]
-        w = self.winfo_width()
-        h = self.winfo_height()
+        self.wm_withdraw()
+        self.after_idle(func=self.wm_deiconify)
+        self.geometry(geometry_string=self.geom)
+
+    def resizexy(self, event, direction) -> None:
+        newx: int = self.winfo_x()
+        newy: int = self.winfo_y()
+        min_height: int = self.wm_minsize()[1]
+        min_width: int = self.wm_minsize()[0]
+        w: int = self.winfo_width()
+        h: int = self.winfo_height()
 
         xdifference = 0
         ydifference = 0
 
         if "x" in direction:
-            xwin = self.winfo_x()
-            xdifference = event.x_root - xwin
+            xwin: int = self.winfo_x()
+            xdifference: int = event.x_root - xwin
             if "e" in direction:
                 xdifference = xdifference - w
                 if w + xdifference < min_width:
@@ -243,19 +339,21 @@ class App(ctk.CTk):
                 newx = xwin - xdifference
 
         if "y" in direction:
-            ywin = self.winfo_y()
-            ydifference = event.y_root - ywin
+            ywin: int = self.winfo_y()
+            ydifference: int = event.y_root - ywin
             if "s" in direction:
                 ydifference = ydifference - h
                 if h + ydifference < min_height:
-                    ydifference =  min_height - h
+                    ydifference = min_height - h
             else:
                 ydifference = -ydifference
                 if h + ydifference < min_height:
                     ydifference = 0
                 newy = ywin - ydifference
 
-        self.wm_geometry(f"{w + xdifference}x{h + ydifference}+{newx}+{newy}")
+        self.wm_geometry(
+            newGeometry=f"{w + xdifference}x{h + ydifference}+{newx}+{newy}"
+        )
 
 
 if __name__ == "__main__":
