@@ -22,19 +22,22 @@ class Titlebar(ctk.CTkFrame):
         self.parent = parent
         self.titlebarcolor: str = titlebarcolor
         self.fg: str = foreground
+        self.hoverclose: bool = False
+        self.hoverexpand: bool = False
+        self.hoverminimize: bool = False
 
         # add buttons to the title bar
         self.title = ctk.CTkLabel(
             master=self, text=title, font=("helvetica", 10), padx=5
         )
         self.close_button = ctk.CTkButton(
-            master=self, text="  ×  ", command=parent.destroy, font=("calibri", 13)
+            master=self, text="  ×  ", cursor="hand2", font=("calibri", 13)
         )
         self.expand_button = ctk.CTkButton(
-            master=self, text=" 🗖 ", command=self.maximize_me, font=("calibri", 13)
+            master=self, text=" 🗖 ", font=("calibri", 13)
         )
         self.minimize_button = ctk.CTkButton(
-            master=self, text=" ⎯ ", command=self.minimize_me, font=("calibri", 13)
+            master=self, text=" ⎯ ", font=("calibri", 13)
         )
 
         # pack the widgets
@@ -48,20 +51,23 @@ class Titlebar(ctk.CTkFrame):
         self.bind(sequence="<Double-Button-1>", command=self.maximize_me)
 
         # hover effects for buttons
-        self.close_button.bind(sequence="<Enter>", command=self.changex_on_hovering)
-        self.close_button.bind(sequence="<Leave>", command=self.returnx_to_normalstate)
+        self.close_button.bind(sequence="<Enter>", command=self.change_x_on_hovering)
+        self.close_button.bind(sequence="<Leave>", command=self.return_x_after_hover)
         self.expand_button.bind(
-            sequence="<Enter>", command=self.change_size_on_hovering
+            sequence="<Enter>", command=self.change_expand_on_hovering
         )
         self.expand_button.bind(
-            sequence="<Leave>", command=self.return_size_on_hovering
+            sequence="<Leave>", command=self.return_expand_after_hover
         )
         self.minimize_button.bind(
-            sequence="<Enter>", command=self.changem_size_on_hovering
+            sequence="<Enter>", command=self.change_minimize_on_hovering
         )
         self.minimize_button.bind(
-            sequence="<Leave>", command=self.returnm_size_on_hovering
+            sequence="<Leave>", command=self.return_minimize_after_hover
         )
+        self.close_button.bind(sequence="<ButtonRelease>", command=self.close_me)
+        self.expand_button.bind(sequence="<ButtonRelease>", command=self.maximize_me)
+        self.minimize_button.bind(sequence="<ButtonRelease>", command=self.minimize_me)
 
         # bind move to frame and label
         self.bindMove(widget=self)
@@ -105,7 +111,13 @@ class Titlebar(ctk.CTkFrame):
         xy = geom.split("+")[0]
         return [int(val) for val in xy.split("x")]
 
+    def close_me(self, event=None) -> None:
+        if self.hoverclose:
+            self.parent.destroy()
+
     def minimize_me(self, event=None) -> None:
+        if self.hoverminimize == False:
+            return
         if self.parent.minimized == False:
             self.parent.update_idletasks()
             self.parent.overrideredirect(False)
@@ -133,6 +145,8 @@ class Titlebar(ctk.CTkFrame):
             self.parent.minimized = False
 
     def maximize_me(self, *args) -> None:
+        if self.hoverexpand == False:
+            return
         if self.parent.maximized == False:
             self.normal_size: str = self.parent.geometry()
             self.expand_button.configure(text=" 🗗 ")
@@ -146,23 +160,29 @@ class Titlebar(ctk.CTkFrame):
             self.parent.geometry(self.normal_size)
             self.parent.maximized = not self.parent.maximized
 
-    def changex_on_hovering(self, event) -> None:
+    def change_x_on_hovering(self, event) -> None:
         self.close_button["bg"] = Colors.RED
+        self.hoverclose = True
 
-    def returnx_to_normalstate(self, event) -> None:
+    def return_x_after_hover(self, event) -> None:
         self.close_button["bg"] = self.titlebarcolor
+        self.hoverclose = False
 
-    def change_size_on_hovering(self, event) -> None:
+    def change_expand_on_hovering(self, event) -> None:
         self.expand_button["bg"] = Colors.LGRAY
+        self.hoverexpand = True
 
-    def return_size_on_hovering(self, event) -> None:
+    def return_expand_after_hover(self, event) -> None:
         self.expand_button["bg"] = self.titlebarcolor
+        self.hoverexpand = False
 
-    def changem_size_on_hovering(self, event) -> None:
+    def change_minimize_on_hovering(self, event) -> None:
         self.minimize_button["bg"] = Colors.LGRAY
+        self.hoverminimize = True
 
-    def returnm_size_on_hovering(self, event) -> None:
+    def return_minimize_after_hover(self, event) -> None:
         self.minimize_button["bg"] = self.titlebarcolor
+        self.hoverminimize = False
 
 
 class App(ctk.CTk):
