@@ -1,6 +1,8 @@
+import pathlib
 import customtkinter as ctk
 import tkinter as tk
-import Utils.titlebar as tb
+import exampleApp.Utils.titlebar as tb
+from pathlib import Path
 import sys
 import os
 
@@ -11,7 +13,8 @@ def resolve_path(path) -> str:
         resolved_path: str = os.path.abspath(path=os.path.join(sys._MEIPASS, path))
     else:
         # Normal development mode. Use os.getcwd() or __file__ as appropriate in your case...
-        resolved_path: str = os.path.abspath(path=os.path.join(os.getcwd(), path))
+        parent: Path = Path(__file__).parent.parent
+        resolved_path: str = os.path.abspath(path=os.path.join(parent, path))
 
     return resolved_path
 
@@ -64,10 +67,14 @@ class App(tb.App):
             SubFrame(parent=baseFrame, labelText=f"Label{i}", buttonText=f"Button{i}")
 
 
-if __name__ == "__main__":
+def main():
     ctk.set_appearance_mode(mode_string="dark")  # Modes: system (default), light, dark
     ctk.set_default_color_theme(
         color_string=resolve_path(path="./style/theme.json")
     )  # Themes: blue (default), dark-blue, green
     app = App(title="Example app", width=300, height=300)
     app.mainloop()
+
+
+if __name__ == "__main__":
+    main()
