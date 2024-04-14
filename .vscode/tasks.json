@@ -6,7 +6,7 @@
         {
             "label": "build",
             "type": "shell",
-            "command": "pyinstaller app.spec"
+            "command": "pyinstaller exampleApp.spec"
         }
     ]
 }

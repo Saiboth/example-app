@@ -1,12 +1,12 @@
 # -*- mode: python ; coding: utf-8 -*-
 
 added_files = [
-    ('App/Utils', 'Utils'),
+    ('exampleApp/Utils', 'Utils'),
     ('style', 'style')
 ]
 
 a = Analysis(
-    ['App\\app.py'],
+    ['exampleApp\\app.py'],
     pathex=[],
     binaries=[],
     datas=added_files,
@@ -25,7 +25,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='app',
+    name='exampleApp',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -46,5 +46,5 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='app',
+    name='exampleApp',
 )
