@@ -4,9 +4,21 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "build binary",
+            "type": "shell",
+            "command": "pyinstaller --noconfirm exampleApp.spec"
+        },
+        {
+            "label": "run binary",
+            "type": "shell",
+            "command": "./dist/exampleApp.exe",
+            "problemMatcher": []
+        },
+        {
             "label": "build",
             "type": "shell",
-            "command": "pyinstaller app.spec"
-        }
+            "dependsOn": ["build binary", "run binary"],
+            "dependsOrder": "sequence"
+        },
     ]
 }
