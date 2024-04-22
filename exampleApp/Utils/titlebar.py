@@ -1,4 +1,4 @@
-import customtkinter as ctk
+import ttkbootstrap as ttkb
 from tkinter import TclError
 from ctypes import windll
 
@@ -11,14 +11,14 @@ class Colors:
     RED = "#ae0d1a"
 
 
-class Titlebar(ctk.CTkFrame):
+class Titlebar(ttkb.Frame):
     def __init__(
         self, parent, title="", titlebarcolor="#333333", foreground="#ffffff"
     ) -> None:
         super().__init__(master=parent)
-        self.configure(
-            bg_color=titlebarcolor
-        )  # , relief='raised', bd=0, highlightthickness=0)
+        # self.configure(
+        # bg_color=titlebarcolor
+        # )  # , relief='raised', bd=0, highlightthickness=0)
         self.parent = parent
         self.titlebarcolor: str = titlebarcolor
         self.fg: str = foreground
@@ -27,18 +27,12 @@ class Titlebar(ctk.CTkFrame):
         self.hoverminimize: bool = False
 
         # add buttons to the title bar
-        self.title = ctk.CTkLabel(
-            master=self, text=title, font=("helvetica", 10), padx=5
+        self.title = ttkb.Label(master=self, text=title, font=("helvetica", 10))
+        self.close_button = ttkb.Button(
+            master=self, text="  ×  ", cursor="hand2", takefocus=False, bootstyle="primary"  # type: ignore
         )
-        self.close_button = ctk.CTkButton(
-            master=self, text="  ×  ", cursor="hand2", font=("calibri", 13)
-        )
-        self.expand_button = ctk.CTkButton(
-            master=self, text=" 🗖 ", font=("calibri", 13)
-        )
-        self.minimize_button = ctk.CTkButton(
-            master=self, text=" ⎯ ", font=("calibri", 13)
-        )
+        self.expand_button = ttkb.Button(master=self, text=" 🗖 ", takefocus=False, bootstyle="primary")  # type: ignore
+        self.minimize_button = ttkb.Button(master=self, text=" ⎯ ", takefocus=False, bootstyle="primary")  # type: ignore
 
         # pack the widgets
         self.title.pack(side="left", padx=10)
@@ -48,26 +42,22 @@ class Titlebar(ctk.CTkFrame):
         self.pack(fill="x")
 
         # bind double click to maximize method
-        self.bind(sequence="<Double-Button-1>", command=self.maximize_me)
+        self.bind(sequence="<Double-Button-1>", func=self.maximize_me)
 
         # hover effects for buttons
-        self.close_button.bind(sequence="<Enter>", command=self.change_x_on_hovering)
-        self.close_button.bind(sequence="<Leave>", command=self.return_x_after_hover)
-        self.expand_button.bind(
-            sequence="<Enter>", command=self.change_expand_on_hovering
-        )
-        self.expand_button.bind(
-            sequence="<Leave>", command=self.return_expand_after_hover
+        self.close_button.bind(sequence="<Enter>", func=self.change_x_on_hovering)
+        self.close_button.bind(sequence="<Leave>", func=self.return_x_after_hover)
+        self.expand_button.bind(sequence="<Enter>", func=self.change_expand_on_hovering)
+        self.expand_button.bind(sequence="<Leave>", func=self.return_expand_after_hover)
+        self.minimize_button.bind(
+            sequence="<Enter>", func=self.change_minimize_on_hovering
         )
         self.minimize_button.bind(
-            sequence="<Enter>", command=self.change_minimize_on_hovering
+            sequence="<Leave>", func=self.return_minimize_after_hover
         )
-        self.minimize_button.bind(
-            sequence="<Leave>", command=self.return_minimize_after_hover
-        )
-        self.close_button.bind(sequence="<ButtonRelease>", command=self.close_me)
-        self.expand_button.bind(sequence="<ButtonRelease>", command=self.maximize_me)
-        self.minimize_button.bind(sequence="<ButtonRelease>", command=self.minimize_me)
+        self.close_button.bind(sequence="<ButtonRelease>", func=self.close_me)
+        self.expand_button.bind(sequence="<ButtonRelease>", func=self.maximize_me)
+        self.minimize_button.bind(sequence="<ButtonRelease>", func=self.minimize_me)
 
         # bind move to frame and label
         self.bindMove(widget=self)
@@ -140,7 +130,7 @@ class Titlebar(ctk.CTkFrame):
             self.parent.deiconify()
             self.parent.focus()
             self.parent.after_idle(
-                lambda: self.bind(sequence="<FocusOut>", command=self.minimize_me)
+                lambda: self.bind(sequence="<FocusOut>", func=self.minimize_me)
             )
             self.parent.minimized = False
 
@@ -161,39 +151,39 @@ class Titlebar(ctk.CTkFrame):
             self.parent.maximized = not self.parent.maximized
 
     def change_x_on_hovering(self, event) -> None:
-        self.close_button["bg"] = Colors.RED
+        self.close_button.configure(bootstyle="danger")  # type: ignore
         self.hoverclose = True
 
     def return_x_after_hover(self, event) -> None:
-        self.close_button["bg"] = self.titlebarcolor
+        self.close_button.configure(bootstyle="primary")  # type: ignore
         self.hoverclose = False
 
     def change_expand_on_hovering(self, event) -> None:
-        self.expand_button["bg"] = Colors.LGRAY
+        self.expand_button.configure(bootstyle="secondary")  # type: ignore
         self.hoverexpand = True
 
     def return_expand_after_hover(self, event) -> None:
-        self.expand_button["bg"] = self.titlebarcolor
+        self.expand_button.configure(bootstyle="primary")  # type: ignore
         self.hoverexpand = False
 
     def change_minimize_on_hovering(self, event) -> None:
-        self.minimize_button["bg"] = Colors.LGRAY
+        self.minimize_button.configure(bootstyle="secondary")  # type: ignore
         self.hoverminimize = True
 
     def return_minimize_after_hover(self, event) -> None:
-        self.minimize_button["bg"] = self.titlebarcolor
+        self.minimize_button.configure(bootstyle="primary")  # type: ignore
         self.hoverminimize = False
 
 
-class App(ctk.CTk):
+class App(ttkb.Window):
     def __init__(self, title="", width=400, height=200, titlebarcolor="") -> None:
-        super().__init__()
+        super().__init__(themename="darkly")  # themename="darkly"
         self.title(string=title)
         self.titlestring: str = title
         self.titlebarcolor: str = titlebarcolor
         self.overrideredirect(boolean=True)  # turns off title bar, geometry
         self.geom: str = f"{width}x{height}+1200+300"
-        self.geometry(geometry_string=self.geom)
+        self.geometry(newGeometry=self.geom)
         self.minsize(width=width, height=height)
         # self.iconbitmap("your_icon.ico") # to show your own icon
         self.minimized = False
@@ -220,98 +210,98 @@ class App(ctk.CTk):
 
     def resizeSetup(self) -> None:
         # a frame for the main area of the window, this is where the actual app will go
-        self.window = ctk.CTkFrame(master=self)
+        self.window = ttkb.Frame(master=self)
         self.window.pack(
             expand=1, fill="both"
         )  # replace this with your main Canvas/Frame/etc.
 
         frame_size = 3
         # resize widgets
-        self.resizex_widget = ctk.CTkFrame(
+        self.resizex_widget = ttkb.Frame(
             master=self, cursor="sb_h_double_arrow", width=5
         )
         self.resizex_widget.place(
             relx=1, relheight=1, anchor="ne"
         )  # , ipadx=2, fill="y")
-        self.resizex_widget2 = ctk.CTkFrame(
+        self.resizex_widget2 = ttkb.Frame(
             master=self, cursor="sb_h_double_arrow", width=5
         )
         self.resizex_widget2.place(
             relx=0, relheight=1, anchor="nw"
         )  # , ipadx=2, fill="y")
 
-        self.resizey_widget = ctk.CTkFrame(
+        self.resizey_widget = ttkb.Frame(
             master=self, cursor="sb_v_double_arrow", height=5
         )
         self.resizey_widget.place(relx=0, rely=1, anchor="sw", relwidth=1)
-        self.resizey_widget2 = ctk.CTkFrame(
+        self.resizey_widget2 = ttkb.Frame(
             master=self, cursor="sb_v_double_arrow", height=5
         )
         self.resizey_widget2.place(relx=0, rely=0, anchor="nw", relwidth=1)
 
         corner_size = 3
-        self.resizexy_widget_se = ctk.CTkFrame(
+        self.resizexy_widget_se = ttkb.Frame(
             master=self, cursor="size_nw_se", width=corner_size, height=corner_size
         )
         self.resizexy_widget_se.place(relx=1, rely=1, anchor="se")
-        self.resizexy_widget_sw = ctk.CTkFrame(
+        self.resizexy_widget_sw = ttkb.Frame(
             master=self, cursor="size_ne_sw", width=corner_size, height=corner_size
         )
         self.resizexy_widget_sw.place(relx=0, rely=1, anchor="sw")
-        self.resizexy_widget_nw = ctk.CTkFrame(
+        self.resizexy_widget_nw = ttkb.Frame(
             master=self, cursor="size_nw_se", width=corner_size, height=corner_size
         )
         self.resizexy_widget_nw.place(relx=0, rely=0, anchor="nw")
-        self.resizexy_widget_ne = ctk.CTkFrame(
+        self.resizexy_widget_ne = ttkb.Frame(
             master=self, cursor="size_ne_sw", width=corner_size, height=corner_size
         )
         self.resizexy_widget_ne.place(relx=1, rely=0, anchor="ne")
 
         self.resizex_widget.bind(
             sequence="<B1-Motion>",
-            command=lambda event, arg=("x", "e"): self.resizexy(
+            func=lambda event, arg=("x", "e"): self.resizexy(
                 event=event, direction=arg
             ),
         )
         self.resizex_widget2.bind(
             sequence="<B1-Motion>",
-            command=lambda event, arg=("x", "w"): self.resizexy(
+            func=lambda event, arg=("x", "w"): self.resizexy(
                 event=event, direction=arg
             ),
         )
         self.resizey_widget.bind(
             sequence="<B1-Motion>",
-            command=lambda event, arg=("y", "s"): self.resizexy(
+            func=lambda event, arg=("y", "s"): self.resizexy(
                 event=event, direction=arg
             ),
         )
         self.resizey_widget2.bind(
             sequence="<B1-Motion>",
-            command=lambda event, arg=("y", "n"): self.resizexy(
+            func=lambda event, arg=("y", "n"): self.resizexy(
                 event=event, direction=arg
             ),
         )
         self.resizexy_widget_se.bind(
             sequence="<B1-Motion>",
-            command=lambda event, arg=("x", "y", "s", "e"): self.resizexy(
+            func=lambda event, arg=("x", "y", "s", "e"): self.resizexy(
                 event=event, direction=arg
             ),
         )
         self.resizexy_widget_sw.bind(
             sequence="<B1-Motion>",
-            command=lambda event, arg=("x", "y", "s", "w"): self.resizexy(
+            func=lambda event, arg=("x", "y", "s", "w"): self.resizexy(
                 event=event, direction=arg
             ),
         )
         self.resizexy_widget_nw.bind(
             sequence="<B1-Motion>",
-            command=lambda event, arg=("x", "y", "n", "w"): self.resizexy(
+            func=lambda event, arg=("x", "y", "n", "w"): self.resizexy(
                 event=event, direction=arg
             ),
         )
         self.resizexy_widget_ne.bind(
             sequence="<B1-Motion>",
-            command=lambda event, arg=("x", "y", "n", "e"): self.resizexy(
+            func=lambda event, arg=("x", "y", "n", "e"): self.resizexy(
                 event=event, direction=arg
             ),
         )
@@ -332,7 +322,7 @@ class App(ctk.CTk):
 
         self.wm_withdraw()
         self.after_idle(func=self.wm_deiconify)
-        self.geometry(geometry_string=self.geom)
+        self.geometry(newGeometry=self.geom)
 
     def resizexy(self, event, direction) -> None:
         newx: int = self.winfo_x()
